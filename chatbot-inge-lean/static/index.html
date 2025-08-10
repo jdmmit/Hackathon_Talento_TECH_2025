@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot INGE LEAN SAS</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background-color: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        .powered-by {
+            text-align: center;
+            color: #95a5a6;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+        }
+        #chat {
+            height: 450px;
+            overflow-y: auto;
+            border: 2px solid #ecf0f1;
+            padding: 20px;
+            margin-bottom: 20px;
+            background-color: #fafafa;
+            border-radius: 10px;
+            scroll-behavior: smooth;
+        }
+        .input-container {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        #userInput {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #bdc3c7;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        #userInput:focus {
+            border-color: #3498db;
+        }
+        button {
+            padding: 15px 25px;
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+            min-width: 100px;
+        }
+        button:hover {
+            background: linear-gradient(45deg, #2980b9, #1f5f8b);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+        button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .message {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 15px;
+            max-width: 80%;
+            word-wrap: break-word;
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .user-message {
+            background: linear-gradient(45deg, #74b9ff, #0984e3);
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+        .bot-message {
+            background: linear-gradient(45deg, #00b894, #00a085);
+            color: white;
+            margin-right: auto;
+        }
+        .loading {
+            background: #f8f9fa;
+            color: #6c757d;
+            font-style: italic;
+            border: 2px dashed #dee2e6;
+        }
+        .timestamp {
+            font-size: 0.8em;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+        .status-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+        .status-online {
+            background-color: #2ecc71;
+            color: white;
+        }
+        .status-offline {
+            background-color: #e74c3c;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="status-indicator status-online" id="statusIndicator">
+        🟢 En línea
+    </div>
+
+    <div class="container">
+        <h1>🤖 Chatbot INGE LEAN SAS</h1>
+        <div class="powered-by">Powered by OpenAI GPT</div>
+        <p class="subtitle">
+            ¡Hola! Soy tu asistente virtual inteligente. Pregúntame sobre nuestros servicios, ubicación, horarios y más.
+        </p>
+
+        <div id="chat">
+            <div class="message bot-message">
+                <strong>🤖 Asistente:</strong> ¡Hola! Bienvenido a INGE LEAN SAS. Soy tu asistente virtual powered by OpenAI. ¿En qué puedo ayudarte hoy?
+                <div class="timestamp">Ahora</div>
+            </div>
+        </div>
+
+        <div class="input-container">
+            <input type="text" id="userInput" placeholder="Escribe tu pregunta aquí..." onkeypress="handleKeyPress(event)">
+            <button onclick="sendQuestion()" id="sendButton">
+                <span id="buttonText">Enviar</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function getCurrentTime() {
+            return new Date().toLocaleTimeString('es-CO', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendQuestion();
+            }
+        }
+
+        function sendQuestion() {
+            const input = document.getElementById('userInput');
+            const sendButton = document.getElementById('sendButton');
+            const buttonText = document.getElementById('buttonText');
+            const chat = document.getElementById('chat');
+            const pregunta = input.value.trim();
+
+            if (!pregunta) {
+                input.focus();
+                input.style.borderColor = '#e74c3c';
+                setTimeout(() => {
+                    input.style.borderColor = '#bdc3c7';
+                }, 1000);
+                return;
+            }
+
+            // Mostrar mensaje del usuario
+            chat.innerHTML += `
+                <div class="message user-message">
+                    <strong>👤 Tú:</strong> ${pregunta}
+                    <div class="timestamp">${getCurrentTime()}</div>
+                </div>
+            `;
+
+            // Mostrar indicador de carga
+            chat.innerHTML += `
+                <div class="message loading" id="loading">
+                    <strong>🤖 Asistente:</strong> Pensando... 🧠
+                    <div class="timestamp">${getCurrentTime()}</div>
+                </div>
+            `;
+
+            // Limpiar input y cambiar estado del botón
+            input.value = '';
+            sendButton.disabled = true;
+            buttonText.textContent = 'Enviando...';
+
+            // Scroll hacia abajo
+            chat.scrollTop = chat.scrollHeight;
+
+            // Enviar pregunta al backend
+            fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({pregunta: pregunta})
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Remover indicador de carga
+                const loadingElement = document.getElementById('loading');
+                if (loadingElement) {
+                    loadingElement.remove();
+                }
+
+                // Mostrar respuesta del bot
+                if (data.respuesta) {
+                    chat.innerHTML += `
+                        <div class="message bot-message">
+                            <strong>🤖 Asistente:</strong> ${data.respuesta}
+                            <div class="timestamp">${getCurrentTime()}</div>
+                        </div>
+                    `;
+                } else if (data.error) {
+                    chat.innerHTML += `
+                        <div class="message bot-message">
+                            <strong>🤖 Asistente:</strong> Lo siento, hubo un error: ${data.error}
+                            <div class="timestamp">${getCurrentTime()}</div>
+                        </div>
+                    `;
+                }
+
+                // Actualizar estado
+                updateStatus(true);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const loadingElement = document.getElementById('loading');
+                if (loadingElement) {
+                    loadingElement.remove();
+                }
+
+                chat.innerHTML += `
+                    <div class="message bot-message">
+                        <strong>🤖 Asistente:</strong> Lo siento, hubo un problema de conexión. Por favor, verifica tu conexión a internet e intenta de nuevo.
+                        <div class="timestamp">${getCurrentTime()}</div>
+                    </div>
+                `;
+
+                // Actualizar estado
+                updateStatus(false);
+            })
+            .finally(() => {
+                // Restaurar botón
+                sendButton.disabled = false;
+                buttonText.textContent = 'Enviar';
+                input.focus();
+
+                // Scroll hacia abajo
+                chat.scrollTop = chat.scrollHeight;
+            });
+        }
+
+        function updateStatus(isOnline) {
+            const statusIndicator = document.getElementById('statusIndicator');
+            if (isOnline) {
+                statusIndicator.className = 'status-indicator status-online';
+                statusIndicator.textContent = '🟢 En línea';
+            } else {
+                statusIndicator.className = 'status-indicator status-offline';
+                statusIndicator.textContent = '🔴 Sin conexión';
+            }
+        }
+
+        // Verificar estado al cargar
+        window.addEventListener('load', () => {
+            document.getElementById('userInput').focus();
+
+            // Verificar conexión
+            fetch('/health')
+                .then(response => response.json())
+                .then(data => {
+                    updateStatus(data.openai_connected);
+                })
+                .catch(() => {
+                    updateStatus(false);
+                });
+        });
+    </script>
+</body>
+</html>
