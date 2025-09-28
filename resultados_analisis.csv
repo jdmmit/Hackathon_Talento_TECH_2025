@@ -1,0 +1,2 @@
+total_registros,variables_numericas,variables_categoricas,r2_regresion_lineal,r2_random_forest,mejor_modelo,mejor_r2
+13108,10,8,0.7188511861661717,0.9214797920782105,Random Forest,0.9214797920782105
